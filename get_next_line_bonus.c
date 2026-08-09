@@ -6,7 +6,7 @@
 /*   By: dsoto-ga <dsoto-ga@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 18:22:22 by dsoto-ga          #+#    #+#             */
-/*   Updated: 2026/08/09 10:52:43 by dsoto-ga         ###   ########.fr       */
+/*   Updated: 2026/08/09 11:03:24 by dsoto-ga         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -58,7 +58,7 @@ char	*get_next_line(int fd)
 	char		*tmp;
 	ssize_t		c_read;
 
-	if (fd < 0 || fd > FD_MAX || BUFFER_SIZE <= 0 || !init_buf(&fd_table[fd]))
+	if (fd < 0 || fd >= FD_MAX || BUFFER_SIZE <= 0 || !init_buf(&fd_table[fd]))
 		return (NULL);
 	line = NULL;
 	c_read = 0;
