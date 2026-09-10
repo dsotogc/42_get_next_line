@@ -6,16 +6,16 @@
 /*   By: dsoto-ga <dsoto-ga@student.42madrid.com    +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2026/08/08 18:22:22 by dsoto-ga          #+#    #+#             */
-/*   Updated: 2026/08/09 11:03:24 by dsoto-ga         ###   ########.fr       */
+/*   Updated: 2026/09/10 18:13:27 by dsoto-ga         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "get_next_line_bonus.h"
 
-static char	*ft_freeline(char **line)
+static char	*ft_free(char **ptr)
 {
-	free(*line);
-	*line = NULL;
+	free(*ptr);
+	*ptr = NULL;
 	return (NULL);
 }
 
@@ -32,50 +32,53 @@ static void	shift(char *buf, size_t start)
 	buf[c] = '\0';
 }
 
-static int	init_buf(char **b)
+static char	*read_line(int fd, char *buffer, char *line)
 {
-	if (*b)
-		return (1);
-	*b = malloc(BUFFER_SIZE + 1);
-	if (!*b)
-		return (0);
-	*b[0] = '\0';
-	return (1);
-}
+	char	*tmp;
+	ssize_t	c_read;
 
-static char	*cut_line(char **line, char *tmp, char *buffer)
-{
-	if (!ft_realloc(line, buffer, tmp - buffer + 1))
-		return (ft_freeline(line));
-	shift(buffer, tmp - buffer + 1);
-	return (*line);
+	c_read = 1;
+	while (c_read > 0)
+	{
+		tmp = ft_strchr(buffer, '\n');
+		if (tmp)
+		{
+			if (!ft_realloc(&line, buffer, tmp - buffer + 1))
+				return (ft_free(&line));
+			shift(buffer, tmp - buffer + 1);
+			return (line);
+		}
+		if (!ft_realloc(&line, buffer, ft_strlen(buffer)))
+			return (ft_free(&line));
+		buffer[0] = '\0';
+		c_read = read(fd, buffer, BUFFER_SIZE);
+		if (c_read > 0)
+			buffer[c_read] = '\0';
+	}
+	if (c_read < 0 || !line || !*line)
+		return (ft_free(&line));
+	return (line);
 }
 
 char	*get_next_line(int fd)
 {
 	static char	*fd_table[FD_MAX];
 	char		*line;
-	char		*tmp;
-	ssize_t		c_read;
 
-	if (fd < 0 || fd >= FD_MAX || BUFFER_SIZE <= 0 || !init_buf(&fd_table[fd]))
+	if (fd < 0 || fd >= FD_MAX || BUFFER_SIZE <= 0)
 		return (NULL);
-	line = NULL;
-	c_read = 0;
-	while (1)
+	if (!fd_table[fd])
 	{
-		tmp = ft_strchr(fd_table[fd], '\n');
-		if (tmp)
-			return (cut_line(&line, tmp, fd_table[fd]));
-		if (!ft_realloc(&line, fd_table[fd], ft_strlen(fd_table[fd])))
-			return (ft_freeline(&line));
+		fd_table[fd] = malloc(BUFFER_SIZE + 1);
+		if (!fd_table[fd])
+			return (NULL);
 		fd_table[fd][0] = '\0';
-		c_read = read(fd, fd_table[fd], BUFFER_SIZE);
-		if (c_read <= 0)
-			break ;
-		fd_table[fd][c_read] = '\0';
 	}
-	if (c_read < 0 || !line || !*line)
-		return (ft_freeline(&line));
+	line = read_line(fd, fd_table[fd], NULL);
+	if (!fd_table[fd][0])
+	{
+		free(fd_table[fd]);
+		fd_table[fd] = NULL;
+	}
 	return (line);
 }
